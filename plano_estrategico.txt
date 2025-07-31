@@ -1,0 +1,363 @@
+
+# PLANO ESTRATÉGICO DE CORREÇÃO E MELHORIA CONTÍNUA
+# SisMed Perobal v9.0 - Sistema de Receitas Médicas 100% Offline
+# Versão: 2.0 | Data: 07/07/2025
+# Arquitetura: 100% Client-Side (Navegador)
+
+================================================================================
+SUMÁRIO EXECUTIVO - ATUALIZADO
+================================================================================
+
+O projeto SisMed Perobal v9.0 será uma aplicação **100% offline** que roda diretamente no navegador Windows (Chrome/Edge), sem necessidade de instalação ou empacotamento como executável (.exe).
+
+DECISÃO ARQUITETURAL FINAL: 100% Client-Side no Navegador
+- Frontend: React + Vite + TypeScript
+- Banco: SQLite via sql.js (navegador)
+- PDF: jsPDF + template oficial
+- Distribuição: Build estático + servidor local
+
+================================================================================
+1. ARQUITETURA DEFINITIVA (100% OFFLINE NO NAVEGADOR)
+================================================================================
+
+1.1 STACK TECNOLÓGICA CONFIRMADA:
+
+FRONTEND: React.js + Vite + TypeScript
+BANCO DE DADOS: SQLite via sql.js (client-side)
+ARMAZENAMENTO: localStorage (cache leve)
+GERAÇÃO PDF: jsPDF + template oficial
+SERVIDOR: npx serve dist (local, sem dependências externas)
+
+1.2 ELIMINAÇÕES CONFIRMADAS:
+❌ Electron (descartado)
+❌ Backend Flask (descartado)
+❌ Executável .exe (descartado)
+❌ Instaladores NSIS (descartado)
+❌ Chamadas HTTP/API (descartado)
+
+1.3 FUNCIONAMENTO:
+✅ Build: npm run build
+✅ Execução: npx serve dist
+✅ Acesso: http://localhost:3000
+✅ Offline: 100% funcional sem internet
+✅ Distribuição: Pasta dist + script .bat
+
+================================================================================
+2. MODELO DE DADOS SIMPLIFICADO (SQLite CLIENT-SIDE)
+================================================================================
+
+2.1 ESTRUTURA DO BANCO (sql.js):
+
+```sql
+-- Pacientes
+CREATE TABLE patients (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nome TEXT NOT NULL,
+    cpf TEXT,
+    data_nascimento DATE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Medicamentos Oficiais (36 itens)
+CREATE TABLE medicines (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    denominacao_generica TEXT NOT NULL,
+    concentracao TEXT NOT NULL,
+    apresentacao TEXT NOT NULL,
+    ativo BOOLEAN DEFAULT 1
+);
+
+-- Receitas
+CREATE TABLE prescriptions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    patient_id INTEGER NOT NULL,
+    data_receita DATE NOT NULL,
+    observacoes TEXT,
+    status TEXT DEFAULT 'ativa',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (patient_id) REFERENCES patients(id)
+);
+
+-- Medicamentos da Receita
+CREATE TABLE prescription_medicines (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    prescription_id INTEGER NOT NULL,
+    medicine_id INTEGER NOT NULL,
+    posologia TEXT NOT NULL,
+    FOREIGN KEY (prescription_id) REFERENCES prescriptions(id),
+    FOREIGN KEY (medicine_id) REFERENCES medicines(id)
+);
+```
+
+================================================================================
+3. TEMPLATE OFICIAL DA RECEITA (ESTRUTURA FIXA)
+================================================================================
+
+3.1 LAYOUT OBRIGATÓRIO:
+
+```
+═══════════════════════════════════════════════════════════════════════════════════
+🏛️ [BRASÃO]                    PREFEITURA DE PEROBAL
+                               Cidade de todos!
+                                                      Secretaria Municipal de Saúde
+
+                                RECEITA MÉDICA
+
+Paciente: [NOME_COMPLETO]                    Data de Nascimento: [DD/MM/AAAA]
+CPF/RG: [XXX.XXX.XXX-XX]
+
+Medicamentos:
+1. [MEDICAMENTO] [DOSAGEM] - [TIPO]
+   Posologia: [FREQUÊNCIA] (ocultar se vazio)
+
+[OBSERVAÇÕES GERAIS] (ocultar se vazio)
+
+                                          Perobal, [DIA] de [MÊS] de [ANO]
+
+                      __________________________________________________
+                                 Assinatura do Médico
+
+      Rua Jaracatiá, 1060 - Telefax (044)3625-1225 - CEP. 87538-000 - PEROBAL - PARANÁ
+═══════════════════════════════════════════════════════════════════════════════════
+```
+
+3.2 REGRAS DE FORMATAÇÃO:
+- Logo: assets/logo-perobal.png (fornecida)
+- Fonte: Helvetica/Arial 11-12pt
+- Centralização: Título, assinatura, endereço
+- Data: Formato extenso à direita
+- Campos opcionais: Ocultar se vazios
+
+================================================================================
+4. FUNCIONALIDADES CORE (100% CLIENT-SIDE)
+================================================================================
+
+4.1 GESTÃO DE PACIENTES:
+✅ Cadastro com validação CPF
+✅ Busca por nome/CPF
+✅ Edição e exclusão
+✅ Armazenamento local (SQLite)
+
+4.2 MEDICAMENTOS OFICIAIS:
+✅ Lista fixa de 36 medicamentos
+✅ Busca e filtro
+✅ Não editável (dados oficiais)
+
+4.3 GERAÇÃO DE RECEITAS:
+✅ Seleção de paciente
+✅ Múltiplos medicamentos + posologia
+✅ Múltiplas datas (sistema avançado)
+✅ Template oficial obrigatório
+✅ Export PDF direto no navegador
+
+4.4 SISTEMA DE MÚLTIPLAS RECEITAS:
+✅ Até 12 receitas por lote
+✅ Datas futuras (máx 6 meses)
+✅ PDF único com múltiplas páginas
+✅ Controle de overflow por página
+
+================================================================================
+5. IMPLEMENTAÇÃO TÉCNICA ATUALIZADA
+================================================================================
+
+5.1 ESTRUTURA DE ARQUIVOS:
+
+```
+sismed-perobal-v9-offline/
+├── public/
+│   └── assets/
+│       └── logo-perobal.png (✅ Implementado)
+├── src/
+│   ├── components/
+│   │   ├── prescriptions/ (✅ Modularizado)
+│   │   │   ├── PrescriptionHeader.tsx
+│   │   │   ├── MedicinesList.tsx
+│   │   │   ├── PrescriptionObservations.tsx
+│   │   │   └── PrescriptionFooter.tsx
+│   │   └── prescription-form/ (✅ Modularizado)
+│   │       ├── MedicineSelector.tsx
+│   │       └── MedicineList.tsx
+│   ├── hooks/
+│   │   └── usePrescriptionForm.ts (✅ Implementado)
+│   ├── services/
+│   │   └── pdfGenerator.ts (✅ Template oficial)
+│   └── types/
+│       └── index.ts (✅ Padronizado)
+├── dist/ (gerado por npm run build)
+├── abrir-sismed.bat (a criar)
+└── README_Offline.txt (a criar)
+```
+
+5.2 CORREÇÕES IMPLEMENTADAS:
+✅ Build errors corrigidos
+✅ PrescriptionForm modularizado
+✅ PrescriptionViewer refatorado
+✅ PDF Generator com template oficial
+✅ Logo oficial integrada
+✅ Hooks customizados criados
+
+================================================================================
+6. FASE 4 - DISTRIBUIÇÃO ATUALIZADA (SEM ELECTRON)
+================================================================================
+
+6.1 PROCESSO DE BUILD E DISTRIBUIÇÃO:
+
+**Etapa 1: Build da Aplicação**
+```bash
+npm run build
+# Gera pasta dist/ com arquivos estáticos
+```
+
+**Etapa 2: Teste Local**
+```bash
+npx serve dist
+# Acesso via http://localhost:3000
+```
+
+**Etapa 3: Validação Offline**
+- Desconectar internet
+- Verificar funcionamento completo
+- Testar geração de PDF
+- Validar banco SQLite no navegador
+
+**Etapa 4: Empacotamento para Distribuição**
+```
+SisMed-Perobal-v9/
+├── dist/ (pasta completa do build)
+├── abrir-sismed.bat
+├── README_Offline.txt
+└── Medicamentos_Oficiais.pdf (lista de referência)
+```
+
+6.2 SCRIPT DE ABERTURA (abrir-sismed.bat):
+```batch
+@echo off
+echo Iniciando SisMed Perobal v9.0...
+echo Aguarde a abertura do navegador...
+cd dist
+npx serve . --single
+pause
+```
+
+6.3 MANUAL DE INSTALAÇÃO (README_Offline.txt):
+```
+SISMED PEROBAL v9.0 - SISTEMA OFFLINE
+====================================
+
+REQUISITOS:
+- Windows 10/11
+- Google Chrome ou Microsoft Edge
+- Node.js (para npx serve)
+
+INSTALAÇÃO:
+1. Extrair pasta SisMed-Perobal-v9 no computador
+2. Executar "abrir-sismed.bat"
+3. Aguardar abertura do navegador
+4. Acessar: http://localhost:3000
+
+FUNCIONAMENTO:
+- 100% offline (sem internet necessária)
+- Dados salvos localmente no navegador
+- PDF gerado diretamente no browser
+- Backup automático via localStorage
+
+SUPORTE:
+- Secretaria Municipal de Saúde de Perobal
+- Telefax: (044) 3625-1225
+```
+
+================================================================================
+7. CHECKLIST DE VALIDAÇÃO FINAL
+================================================================================
+
+7.1 FUNCIONALIDADES CORE:
+□ Cadastro de pacientes funcional
+□ Lista de 36 medicamentos carregada
+□ Geração de receita única
+□ Sistema de múltiplas receitas (até 12)
+□ PDF com template oficial
+□ Funcionamento 100% offline
+
+7.2 VALIDAÇÃO TÉCNICA:
+□ npm run build sem erros
+□ npx serve dist funcional
+□ SQLite operando no navegador
+□ localStorage como cache
+□ Nenhuma dependência externa
+□ Compatibilidade Chrome/Edge
+
+7.3 DISTRIBUIÇÃO:
+□ Pasta dist completa
+□ Script abrir-sismed.bat
+□ README_Offline.txt
+□ Logo oficial integrada
+□ Template receita conforme especificação
+
+================================================================================
+8. CRONOGRAMA ATUALIZADO (5 DIAS)
+================================================================================
+
+📅 DIA 1: Correções Finais
+✅ Build errors corrigidos
+✅ Componentes modularizados
+✅ Logo oficial integrada
+
+📅 DIA 2: Template PDF Oficial
+✅ PDF Generator atualizado
+✅ Layout conforme especificação
+□ Testes de geração múltipla
+
+📅 DIA 3: Integração SQLite
+□ sql.js configurado
+□ Migração de localStorage
+□ 36 medicamentos oficiais
+
+📅 DIA 4: Testes Offline
+□ Validação sem internet
+□ Performance no navegador
+□ Compatibilidade Chrome/Edge
+
+📅 DIA 5: Empacotamento Final
+□ Build otimizado
+□ Scripts de distribuição
+□ Documentação completa
+
+================================================================================
+9. BENEFÍCIOS DA NOVA ARQUITETURA
+================================================================================
+
+9.1 TÉCNICOS:
+✅ Sem custos de Electron
+✅ Instalação simplificada
+✅ Funcionamento garantido offline
+✅ Atualizações via substituição de pasta
+✅ Compatibilidade Windows nativa
+
+9.2 OPERACIONAIS:
+✅ Distribuição via pendrive/email
+✅ Múltiplos computadores (mesmo build)
+✅ Backup automático localStorage
+✅ PDF oficial sem dependências
+✅ Manutenção técnica simplificada
+
+9.3 USUÁRIO FINAL:
+✅ Interface familiar (navegador)
+✅ Funcionamento instantâneo
+✅ Receitas com layout oficial
+✅ Sistema de múltiplas datas
+✅ Impressão direta do navegador
+
+================================================================================
+CONCLUSÃO
+================================================================================
+
+A arquitetura 100% client-side no navegador oferece a melhor relação custo-benefício para o SisMed Perobal, mantendo todas as funcionalidades planejadas sem a complexidade de empacotamento executável.
+
+O sistema funcionará de forma robusta e confiável em qualquer computador Windows com navegador moderno, garantindo produtividade e conformidade com os padrões oficiais da Secretaria Municipal de Saúde de Perobal.
+
+================================================================================
+RESPONSÁVEL TÉCNICO: Sistema Atualizado
+DATA DE ATUALIZAÇÃO: 07/07/2025
+VERSÃO DO DOCUMENTO: 2.0
+PRÓXIMA REVISÃO: 14/07/2025
+================================================================================
